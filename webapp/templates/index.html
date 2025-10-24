@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hedge Hog Matrix Terminal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  </head>
+  <body>
+    <div class="rain"></div>
+    <div class="overlay"></div>
+    <main class="terminal">
+      <header>
+        <h1>🐗 Hedge Hog // Matrix Execution Console</h1>
+        <p>Live LBANK perpetual futures hedging. Tap execute to fire long + short instantly.</p>
+      </header>
+      <section class="controls">
+        <label for="symbolSelect">Select Perpetual Pair</label>
+        <select id="symbolSelect"></select>
+
+        <label for="sizeInput">Trade Size (USDT per leg)</label>
+        <input id="sizeInput" type="number" min="1" step="1" value="1" />
+
+        <div class="slider-group">
+          <label for="tpSlider">Take Profit % <span id="tpValue">111%</span></label>
+          <input id="tpSlider" type="range" min="101" max="150" value="111" />
+        </div>
+        <div class="slider-group">
+          <label for="slSlider">Stop Loss % <span id="slValue">90%</span></label>
+          <input id="slSlider" type="range" min="50" max="99" value="90" />
+        </div>
+        <button id="executeBtn" class="execute">EXECUTE TRADE</button>
+        <button id="stopBtn" class="stop">STOP ALL TRADES</button>
+      </section>
+      <section class="log-panel">
+        <h2>Realtime Event Log</h2>
+        <div id="logStream"></div>
+      </section>
+    </main>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  </body>
+</html>
