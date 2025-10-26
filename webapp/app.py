@@ -1,6 +1,16 @@
 """Matrix-themed Hedge Hog Flask web application."""
 from dotenv import load_dotenv
+import os
+
+# Load .env before anything else
 load_dotenv()
+
+api_key = os.getenv("LBANK_API_KEY")
+secret_key = os.getenv("LBANK_SECRET_KEY")
+
+if not api_key or not secret_key:
+    raise ValueError("❌ Missing required environment variable(s).")
+
 
 
 from __future__ import annotations
