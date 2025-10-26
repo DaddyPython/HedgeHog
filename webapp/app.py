@@ -1,4 +1,8 @@
 """Matrix-themed Hedge Hog Flask web application."""
+from dotenv import load_dotenv
+load_dotenv()
+
+
 from __future__ import annotations
 
 import logging
