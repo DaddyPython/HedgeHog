@@ -43,6 +43,21 @@ python scripts/ingest_news.py
 python scripts/measure_lag.py
 ```
 
+## Running Phase 0 continuously (recommended)
+
+Gate 0 needs ~2 weeks of overlapping book + news data. On any always-on box
+with Docker:
+
+```bash
+docker compose up -d --build   # recorder (daily watchlist refresh) + news ingest
+python3 scripts/status.py      # check collection progress any time
+docker compose logs -f         # watch the collectors
+```
+
+Data lands in `./data/` on the host. `scripts/collect.py` rebuilds the
+watchlist every 24 h so resolved markets rotate out; the news poller runs
+independently. Both restart automatically on failure.
+
 ## What this is not
 
 - Not a money printer. The honest prior is that liquid markets reprice in

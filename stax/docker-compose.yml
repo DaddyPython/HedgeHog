@@ -1,0 +1,14 @@
+services:
+  recorder:
+    build: .
+    command: python scripts/collect.py --limit 40 --refresh-hours 24
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  news:
+    build: .
+    command: python scripts/ingest_news.py
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
