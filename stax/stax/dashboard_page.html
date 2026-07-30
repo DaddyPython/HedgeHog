@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#04070a">
+<title>STAX // PHASE 0</title>
+<style>
+  :root {
+    --bg: #04070a; --panel: #060c10; --grid: #0c2418;
+    --fg: #38ff81; --dim: #1d8a4c; --faint: #0f5230;
+    --amber: #ffb020; --red: #ff4d4d; --white: #d8ffe9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font: 13px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    padding: 10px; padding-bottom: 40px;
+    text-shadow: 0 0 6px rgba(56,255,129,.25);
+  }
+  body::after { /* scanlines */
+    content:""; position: fixed; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.18) 2px 4px);
+  }
+  header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    flex-wrap: wrap; gap: 4px 12px; margin-bottom: 10px;
+    border-bottom: 1px solid var(--grid); padding-bottom: 8px;
+  }
+  h1 { font-size: 15px; letter-spacing: 2px; color: var(--white); }
+  h1 .accent { color: var(--fg); }
+  #clock { color: var(--dim); }
+  .panel {
+    border: 1px solid var(--grid); background: var(--panel);
+    margin-bottom: 10px; padding: 8px 10px;
+  }
+  .panel h2 {
+    font-size: 11px; letter-spacing: 1.5px; color: var(--dim);
+    margin-bottom: 6px; text-transform: uppercase;
+  }
+  .kv { display: flex; flex-wrap: wrap; gap: 4px 22px; }
+  .kv div span { color: var(--dim); margin-right: 6px; }
+  .bar { white-space: pre; font-size: 13px; }
+  .bar b { color: var(--white); font-weight: normal; }
+  .big { font-size: 30px; color: var(--white); letter-spacing: 1px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { color: var(--faint); text-align: left; font-weight: normal;
+       border-bottom: 1px solid var(--grid); padding: 2px 6px 2px 0; }
+  td { padding: 2px 6px 2px 0; border-bottom: 1px dotted #082014;
+       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  td.q { max-width: 0; width: 60%; }
+  .num { text-align: right; }
+  .live  { color: var(--fg); }
+  .stall { color: var(--red); animation: blink 1s step-end infinite; }
+  .amber { color: var(--amber); }
+  .dim   { color: var(--dim); }
+  .white { color: var(--white); }
+  .feed div { padding: 1px 0; border-bottom: 1px dotted #082014;
+              overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .cursor::after { content: "█"; animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  footer { color: var(--faint); font-size: 11px; margin-top: 6px; }
+  .cols { display: grid; grid-template-columns: 1fr; gap: 0 10px; }
+  @media (min-width: 900px) { .cols { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>STAX <span class="accent">//</span> PHASE 0 <span class="accent">//</span> GATE 0 COLLECTOR</h1>
+  <div id="clock">--:--:-- UTC</div>
+</header>
+
+<div class="panel">
+  <h2>System</h2>
+  <div class="kv">
+    <div><span>PHASE</span><b id="phase" class="white">connecting...</b></div>
+    <div><span>UPTIME</span><b id="uptime" class="white">-</b></div>
+    <div><span>BOOKS</span><b id="bookLive">-</b></div>
+    <div><span>NEWS</span><b id="newsLive">-</b></div>
+    <div><span>LINK</span><b id="link" class="live">POLLING</b></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Gate 0 readiness</h2>
+  <div class="big" id="readiness">--%</div>
+  <div class="bar" id="barDays"></div>
+  <div class="bar" id="barNews"></div>
+  <footer id="gateNote"></footer>
+</div>
+
+<div class="cols">
+  <div class="panel">
+    <h2>Collection by day</h2>
+    <table>
+      <thead><tr><th>DAY</th><th class="num">BOOK EVENTS</th><th class="num">NEWS</th><th class="num">LIVE</th></tr></thead>
+      <tbody id="dayRows"></tbody>
+    </table>
+    <footer id="totals"></footer>
+  </div>
+
+  <div class="panel">
+    <h2>Live quotes <span class="dim">(from recorder tail)</span></h2>
+    <table>
+      <thead><tr><th>MARKET</th><th class="num">BID</th><th class="num">ASK</th><th class="num">SPR</th></tr></thead>
+      <tbody id="mktRows"></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2>Wire feed <span class="dim">(live headlines)</span></h2>
+    <div class="feed" id="newsFeed"><div class="dim">awaiting first live headline...</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>Tape <span class="dim">(last trades seen)</span></h2>
+    <div class="feed" id="tape"><div class="dim">no trades in tail window yet</div></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Storage</h2>
+  <div class="kv">
+    <div><span>DATA</span><b id="dataSize" class="white">-</b></div>
+    <div><span>DISK FREE</span><b id="diskFree" class="white">-</b></div>
+    <div><span>CAPACITY</span><b id="capacity" class="white">-</b></div>
+  </div>
+</div>
+
+<footer>STAX v0.1 · read-only measurement · no orders are ever sent from this process <span class="cursor"></span></footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const W = 26;
+
+function bar(label, frac, extra) {
+  const pct = Math.max(0, Math.min(1, frac));
+  const filled = Math.round(pct * W);
+  return label.padEnd(11) + "[<b>" + "\u2588".repeat(filled) + "</b>" +
+         "\u2591".repeat(W - filled) + "] " + extra;
+}
+function fmtUptime(s) {
+  if (!s) return "0m";
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return (d ? d + "d " : "") + String(h).padStart(2, "0") + "h " + String(m).padStart(2, "0") + "m";
+}
+function fmtBytes(b) {
+  if (b == null) return "-";
+  const u = ["B", "KB", "MB", "GB", "TB"];
+  let i = 0; while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+  return b.toFixed(i ? 1 : 0) + " " + u[i];
+}
+const fmtN = n => n.toLocaleString("en-US");
+const hhmm = ts => new Date(ts * 1000).toISOString().slice(11, 19);
+
+function render(s) {
+  if (s.error) { $("phase").textContent = "STATUS ERROR: " + s.error; return; }
+  $("phase").textContent = s.phase;
+  $("uptime").textContent = fmtUptime(s.collection.uptime_seconds);
+  $("bookLive").innerHTML = s.collection.book_live
+    ? '<span class="live">&#9679; LIVE</span>' : '<span class="stall">&#9632; STALLED</span>';
+  $("newsLive").innerHTML = s.collection.news_live
+    ? '<span class="live">&#9679; LIVE</span>' : '<span class="stall">&#9632; STALLED</span>';
+
+  const g = s.gate0;
+  $("readiness").textContent = g.readiness_pct + "%";
+  $("barDays").innerHTML = bar("DAYS", g.days_done / g.days_target,
+    g.days_done + "/" + g.days_target + " overlap days");
+  $("barNews").innerHTML = bar("HEADLINES", s.totals.live_news / g.live_news_reference,
+    fmtN(s.totals.live_news) + " live (ref " + g.live_news_reference + ")");
+  $("gateNote").textContent = g.note + "  [" + g.formula + "]";
+
+  $("dayRows").innerHTML = s.days.slice(-16).map(d =>
+    "<tr><td>" + d.day + "</td><td class='num'>" + fmtN(d.book_events) +
+    "</td><td class='num'>" + fmtN(d.news_items) +
+    "</td><td class='num white'>" + fmtN(d.live_news) + "</td></tr>").join("")
+    || "<tr><td colspan=4 class='dim'>no data yet</td></tr>";
+  $("totals").textContent = "totals: " + fmtN(s.totals.book_events) + " book events · " +
+    fmtN(s.totals.news_items) + " news items · " + fmtN(s.totals.live_news) + " live";
+
+  $("mktRows").innerHTML = s.markets.map(m => {
+    const spr = (m.ask - m.bid).toFixed(3);
+    const label = m.question + (m.outcome ? " [" + m.outcome + "]" : "");
+    return "<tr><td class='q' title=\"" + label.replace(/"/g, "&quot;") + "\">" + label +
+      "</td><td class='num white'>" + m.bid.toFixed(3) +
+      "</td><td class='num white'>" + m.ask.toFixed(3) +
+      "</td><td class='num " + (spr > 0.02 ? "amber" : "dim") + "'>" + spr + "</td></tr>";
+  }).join("") || "<tr><td colspan=4 class='dim'>waiting for price changes...</td></tr>";
+
+  if (s.recent_news.length)
+    $("newsFeed").innerHTML = s.recent_news.map(n =>
+      "<div><span class='dim'>" + hhmm(n.ts) + " " + n.source + "</span> " + n.title + "</div>").join("");
+  if (s.trades.length)
+    $("tape").innerHTML = s.trades.map(t =>
+      "<div><span class='dim'>" + hhmm(t.ts) + "</span> <span class='" +
+      (t.side === "BUY" ? "live" : "amber") + "'>" + t.side.padEnd(4) + "</span> " +
+      t.size + " @ " + t.price.toFixed(3) + " <span class='dim'>" + t.question + "</span></div>").join("");
+
+  $("dataSize").textContent = fmtBytes(s.disk.data_bytes);
+  $("diskFree").textContent = fmtBytes(s.disk.free_bytes);
+  $("capacity").textContent = s.disk.est_days_capacity
+    ? "~" + Math.round(s.disk.est_days_capacity) + " days at current rate" : "-";
+}
+
+async function tick() {
+  try {
+    const resp = await fetch("/api/status");
+    render(await resp.json());
+    $("link").textContent = "POLLING"; $("link").className = "live";
+  } catch {
+    $("link").textContent = "DISCONNECTED"; $("link").className = "stall";
+  }
+}
+setInterval(() => { $("clock").textContent = new Date().toISOString().slice(11, 19) + " UTC"; }, 1000);
+setInterval(tick, 3000);
+tick();
+</script>
+</body>
+</html>

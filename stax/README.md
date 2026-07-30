@@ -58,6 +58,38 @@ Data lands in `./data/` on the host. `scripts/collect.py` rebuilds the
 watchlist every 24 h so resolved markets rotate out; the news poller runs
 independently. Both restart automatically on failure.
 
+## Status dashboard
+
+`docker compose up` also starts a terminal-style web dashboard on port 8080
+(stdlib only, read-only, polls every 3 s):
+
+- phase + uptime + LIVE/STALLED health per collector
+- Gate 0 readiness gauge (overlap days toward 14, live headlines captured)
+- per-day collection table, live quotes from the recorder tail, wire feed,
+  trade tape, and disk usage with estimated days of capacity left
+
+Open `http://<vps-ip>:8080` from any browser. On iPhone: open it in Safari,
+tap Share -> Add to Home Screen, and it behaves like an app.
+
+## Deploying to a VPS
+
+On a fresh Ubuntu VPS (any $5 tier works; prefer >=50 GB disk — book archives
+grow gigabytes per day at a 40-market watchlist):
+
+```bash
+ssh root@<vps-ip>
+apt update && apt install -y docker.io docker-compose-v2 git
+git clone https://github.com/DaddyPython/HedgeHog.git && cd HedgeHog/stax
+docker compose up -d --build
+docker compose ps          # all three services should be running
+```
+
+Then open `http://<vps-ip>:8080`. Optional hardening: the dashboard is
+read-only, but you can restrict it to your own IP with
+`ufw allow from <your-ip> to any port 8080; ufw allow OpenSSH; ufw enable`.
+Watch disk on the dashboard's storage panel; shrink the watchlist
+(`--limit` in docker-compose.yml) if capacity runs short.
+
 ## What this is not
 
 - Not a money printer. The honest prior is that liquid markets reprice in
