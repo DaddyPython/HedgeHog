@@ -1,0 +1,7 @@
+httpx>=0.27
+websockets>=12.0
+feedparser>=6.0
+python-dotenv>=1.0
+
+# Phase 2+ only (execution). Not needed for Phase 0 measurement:
+# py-clob-client>=0.20
